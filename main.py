@@ -16,8 +16,9 @@ from rag import getDB, generate_data_store
 from consts import CHROMA_PATH
 import asyncio
 
+
 class state:
-    doctor_id=63902541323
+    doctor_id = 63902541323
     transcript_text = ""
     current_appointment = ""
     dirty = False
@@ -44,7 +45,6 @@ client = OpenAI(
 getDB()
 
 
-
 # Health Check
 @app.get("/healthCheck")
 def healthCheck():
@@ -60,15 +60,15 @@ def reports(doctor_id: int):
     for filename in os.listdir(directory):
         if filename.endswith('.json'):  # Check for JSON files
             file_path = os.path.join(directory, filename)
-            
+
             try:
                 with open(file_path, 'r') as json_file:
                     data = json.load(json_file)
-                    
+
                     # Check if 'doctor_id' exists in the JSON data
                     if 'doctor_id' in data and data['doctor_id'] == doctor_id:
                         res.append(data)
-      
+
             except json.JSONDecodeError:
                 print(f"{filename}: Error decoding JSON")
             except Exception as e:
@@ -76,14 +76,17 @@ def reports(doctor_id: int):
 
     return {"reports": res}
 
+
 class DeleteReportRequest(BaseModel):
     appointment_id: str
+
 
 @app.delete("/deleteAppointment")
 def deleteAppointment(DeleteReportRequest: DeleteReportRequest):
     # lmao super unsafe but this is an mvp so ¯\_(ツ)_/¯
-    file_path = os.path.join("./reports/", DeleteReportRequest.appointment_id+".json")
-    
+    file_path = os.path.join(
+        "./reports/", DeleteReportRequest.appointment_id+".json")
+
     try:
         # Check if the file exists
         if not os.path.isfile(file_path):
@@ -92,9 +95,10 @@ def deleteAppointment(DeleteReportRequest: DeleteReportRequest):
         # Delete the file
         os.remove(file_path)
         return {"detail": "File deleted successfully"}
-    
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 class Report(BaseModel):
     name: str
@@ -105,18 +109,20 @@ class Report(BaseModel):
     social_history: str
     review_of_symptoms: str
 
-    
+
 class UpdateReportRequest(BaseModel):
     doctor_id: int
     appointment_id: str
     date: str
     data: Report
 
+
 @app.post("/updateAppointment")
 def updateAppointment(UpdateReportRequest: UpdateReportRequest):
     # lmao super unsafe but this is an mvp so ¯\_(ツ)_/¯
-    file_path = os.path.join("./reports/", UpdateReportRequest.appointment_id+".json")
-    
+    file_path = os.path.join(
+        "./reports/", UpdateReportRequest.appointment_id+".json")
+
     try:
         # Check if the file exists
         if not os.path.isfile(file_path):
@@ -124,15 +130,15 @@ def updateAppointment(UpdateReportRequest: UpdateReportRequest):
 
         # Delete the file
         os.remove(file_path)
-    
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    
+
     file_name = "./reports/" + UpdateReportRequest.appointment_id + ".json"
     data = {
-        "doctor_id":UpdateReportRequest.doctor_id,
-        "appointment_id":UpdateReportRequest.appointment_id,
-        "date":UpdateReportRequest.date,
+        "doctor_id": UpdateReportRequest.doctor_id,
+        "appointment_id": UpdateReportRequest.appointment_id,
+        "date": UpdateReportRequest.date,
         "data": {
             "name": UpdateReportRequest.data.name,
             "age": UpdateReportRequest.data.age,
@@ -151,12 +157,11 @@ def updateAppointment(UpdateReportRequest: UpdateReportRequest):
 
     return {"detail": "File updated successfully"}
 
-        
 
-
-# Spectacles Appointments 
+# Spectacles Appointments
 class DoctorRequest(BaseModel):
     doctor_id: int  # Required field
+
 
 @app.post("/startAppointment")
 async def startAppointment(DoctorRequest: DoctorRequest):
@@ -166,29 +171,32 @@ async def startAppointment(DoctorRequest: DoctorRequest):
     appointment_id = uuid.uuid1()
     state.current_appointment = str(appointment_id)
     state.kill = False
-    
-    ## Run Agent Handler in new Thread
+
+    # Run Agent Handler in new Thread
     asyncio.create_task(agent_handler())
-    return {"appointment_id":appointment_id}
+    return {"appointment_id": appointment_id}
 
 
 class AppointmentEndRequest(BaseModel):
     doctor_id: int  # Required field
     appointment_id: str
 
+
 @app.post("/endAppointment")
 def endAppointment(AppointmentEndRequest: AppointmentEndRequest):
     if state.doctor_id != AppointmentEndRequest.doctor_id:
-        raise HTTPException(status_code=400, detail="Failure: Doctor ID mismatch") 
-    
+        raise HTTPException(
+            status_code=400, detail="Failure: Doctor ID mismatch")
+
     if state.current_appointment != AppointmentEndRequest.appointment_id:
-        raise HTTPException(status_code=400, detail="Failure: Appointment ID mismatch") 
-    
+        raise HTTPException(
+            status_code=400, detail="Failure: Appointment ID mismatch")
+
     # TODO: Generate data based on current state
     data = {
-        "doctor_id":state.doctor_id,
-        "appointment_id":state.current_appointment,
-        "date":datetime.now().strftime("%B %d, %Y"),
+        "doctor_id": state.doctor_id,
+        "appointment_id": state.current_appointment,
+        "date": datetime.now().strftime("%B %d, %Y"),
         "data": {
             "name": "Alan Wang",
             "age": "23",
@@ -207,9 +215,9 @@ def endAppointment(AppointmentEndRequest: AppointmentEndRequest):
             json.dump(data, json_file, indent=4)
     except:
         print(f"{file_name}: Error Writing JSON")
-    
+
     state.kill = True
-    return {"message":"Appointment Ended"}
+    return {"message": "Appointment Ended"}
 
 
 # Spectacles Transcript
@@ -217,49 +225,63 @@ class TranscriptRequest(BaseModel):
     appointment_id: str
     transcript: str
 
+
 @app.post("/sendTranscript")
 def sendTranscript(TranscriptRequest: TranscriptRequest):
     # if state.current_appointment != TranscriptRequest.appointment_id:
-    #     raise HTTPException(status_code=400, detail="Failure: Appointment ID mismatch") 
-    
+    #     raise HTTPException(status_code=400, detail="Failure: Appointment ID mismatch")
+
     state.transcript_text = TranscriptRequest.transcript
     state.dirty = True
     print(state.transcript_text)
-    return {"data":state.windows}
+    return {"data": state.windows}
 
 
 # RAG pipeline
 @app.post("/generateDatastore")
 def generateDatastore():
     try:
-        generate_data_store()   
+        generate_data_store()
     except Exception as e:
         print(e)
 
-    return {"message":"Database Generated Successfully"}
+    return {"message": "Database Generated Successfully"}
 
 
 # Async Agent Calls
 async def create_summary():
+    # bullet points
     return False
+
 
 async def create_detailed_summary():
+    # use perplexity
+    # ideally rag step here
+    # mix of diff things to look out for + diagnosis + analyze entire convo
     return False
+
 
 async def conduct_background_research():
+    # gpt call to do more research / grok
     return False
 
+
 async def create_dynamic_ui():
-    state.windows = [{"id":1,"data":"Bruh"},{"id":2,"data":"Bruh"},{"id":3,"data":"Bruh"}]
+    # anthropic llm / gpt4 (give it all info from 3 calls)
+    # smartly split it into 9 windows in specific format
+    state.windows = [{"id": 1, "data": "Bruh"}, {
+        "id": 2, "data": "Bruh"}, {"id": 3, "data": "Bruh"}]
     return False
 
 
 async def agent_handler():
     while True:
-        if(state.kill):
+        if (not state.dirty):
+            continue
+        if (state.kill):
             print(f"Async Thread Killed")
             return
-        
+
         # Create Simple Summary
         await create_summary()
 
@@ -273,4 +295,4 @@ async def agent_handler():
         await create_dynamic_ui()
 
         print(f"Updated Summaries")
-        await asyncio.sleep(5)  # Wait for 5 seconds before checking agai
+        await asyncio.sleep(5)  # Wait for 5 seconds before checking again
