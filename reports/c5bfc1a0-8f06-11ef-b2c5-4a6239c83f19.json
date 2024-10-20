@@ -1,0 +1,14 @@
+{
+    "doctor_id": 63901323,
+    "appointment_id": "c5bfc1a0-8f06-11ef-b2c5-4a6239c83f19",
+    "date": "October 20, 2024",
+    "data": {
+        "name": "",
+        "age": "",
+        "chief_complaint": "Having frequent headaches and difficulty sleeping.",
+        "history_of_present_illness": "Headaches started about 3 weeks ago, occurring almost daily and often accompanied by light sensitivity.",
+        "family_history": "Mother has a history of migraines.",
+        "social_history": "Patient works in a high-stress job and has been working overtime frequently in the past month.",
+        "review_of_symptoms": "Reports fatigue, stress, and occasional nausea along with headaches. No fever or recent infections."
+    }
+}

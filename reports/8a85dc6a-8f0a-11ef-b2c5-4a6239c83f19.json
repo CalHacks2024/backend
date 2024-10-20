@@ -1,0 +1,14 @@
+{
+    "doctor_id": 63901323,
+    "appointment_id": "8a85dc6a-8f0a-11ef-b2c5-4a6239c83f19",
+    "date": "October 20, 2024",
+    "data": {
+        "name": "",
+        "age": "",
+        "chief_complaint": "Experiencing frequent headaches and fatigue.",
+        "history_of_present_illness": "Headaches started about two weeks ago, occurring almost daily and accompanied by a feeling of tiredness.",
+        "family_history": "Mother has a history of migraines.",
+        "social_history": "Works in a high-stress environment, no recent travel or known exposure to infectious diseases.",
+        "review_of_symptoms": "Reports occasional dizziness and difficulty concentrating, no nausea or visual disturbances."
+    }
+}

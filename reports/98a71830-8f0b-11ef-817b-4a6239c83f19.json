@@ -1,0 +1,14 @@
+{
+    "doctor_id": 63901323,
+    "appointment_id": "98a71830-8f0b-11ef-817b-4a6239c83f19",
+    "date": "October 20, 2024",
+    "data": {
+        "name": "",
+        "age": "",
+        "chief_complaint": "I have been feeling very tired and have a persistent cough.",
+        "history_of_present_illness": "The tiredness and cough started about two weeks ago. No history of similar issues before.",
+        "family_history": "No known history of respiratory problems or similar symptoms in the family.",
+        "social_history": "Currently living with family, no recent travel, works in an office with moderate exposure to coworkers.",
+        "review_of_symptoms": "Fatigue, persistent cough, occasional shortness of breath, no fever, no chest pain."
+    }
+}

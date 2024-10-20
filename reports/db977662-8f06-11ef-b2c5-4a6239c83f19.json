@@ -1,0 +1,14 @@
+{
+    "doctor_id": 63901323,
+    "appointment_id": "db977662-8f06-11ef-b2c5-4a6239c83f19",
+    "date": "October 20, 2024",
+    "data": {
+        "name": "",
+        "age": "",
+        "chief_complaint": "Patient reports experiencing persistent headaches and dizziness for the past week.",
+        "history_of_present_illness": "The patient mentions that these headaches began after a stressful week at work, and have been accompanied by occasional nausea.",
+        "family_history": "No known family history of similar neurological issues.",
+        "social_history": "The patient works from home and has not recently traveled. No known recent exposure to infectious diseases.",
+        "review_of_symptoms": "Headaches, dizziness, occasional nausea; denies fever, vision changes, or recent injuries."
+    }
+}

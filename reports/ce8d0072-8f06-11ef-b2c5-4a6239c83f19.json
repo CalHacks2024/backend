@@ -1,0 +1,14 @@
+{
+    "doctor_id": 63901323,
+    "appointment_id": "ce8d0072-8f06-11ef-b2c5-4a6239c83f19",
+    "date": "October 20, 2024",
+    "data": {
+        "name": "",
+        "age": "",
+        "chief_complaint": "I have been having severe headaches and dizziness.",
+        "history_of_present_illness": "The headaches started about two weeks ago and occur daily, often accompanied by light sensitivity.",
+        "family_history": "There is a history of migraines in my family, including my mother and sister.",
+        "social_history": "I work in an office environment and have not traveled recently or been exposed to infectious diseases.",
+        "review_of_symptoms": "Headaches, dizziness, light sensitivity, no nausea or vision changes."
+    }
+}

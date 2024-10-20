@@ -1,0 +1,14 @@
+{
+    "doctor_id": 63901323,
+    "appointment_id": "5bfbe722-8f0a-11ef-b2c5-4a6239c83f19",
+    "date": "October 20, 2024",
+    "data": {
+        "name": "",
+        "age": "",
+        "chief_complaint": "Foot pain and swelling after playing basketball.",
+        "history_of_present_illness": "Severe pain unresponsive to ice application, likely due to a basketball-related injury.",
+        "family_history": "Not provided.",
+        "social_history": "Not provided.",
+        "review_of_symptoms": "Foot pain and swelling, likely a sprain or strain. Requires further evaluation."
+    }
+}

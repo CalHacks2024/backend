@@ -7,7 +7,8 @@ import json
 import uuid
 from datetime import datetime, timedelta
 from pydantic import BaseModel
-from groq import Groq
+
+import openai
 
 # LLM imports
 from langchain.chains.flare.prompts import PROMPT_TEMPLATE
@@ -17,11 +18,11 @@ from rag import getDB, generate_data_store
 from consts import CHROMA_PATH
 from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
-# from langchain.llms import OpenAI
 from langchain_openai import ChatOpenAI
-# from langchain.schema.runnable import RunnableSequence
 from langchain_core.runnables import RunnableSequence, RunnableMap
 import asyncio
+from openai import OpenAI
+from groq import Groq
 
 class state:
     doctor_id = 63902541323
@@ -36,7 +37,7 @@ class state:
     diagnosis = ""
     moreResearchRequired = ""
 
-    windows = {}
+    windows = []
 
 
 # Init API
@@ -190,10 +191,16 @@ class AppointmentEndRequest(BaseModel):
     doctor_id: int  # Required field
     appointment_id: str
 
+class Report():
+    chief_complaint: str
+    history_of_present_illness: str
+    family_history: str
+    social_history: str
+    review_of_symptoms: str
 
 def generate_report(information):
     prompt = f"""
-    Convert the following information about a patient into an obejct with the fields:
+    Convert the following information about a patient into an object with the fields:
     chief_complaint, history_of_present_illness, family_history, social_history and review_of_symptoms.
     Avoid complex medical terminology and be concise.
 
@@ -206,17 +213,42 @@ def generate_report(information):
     social_history: any relevant information about exposure to others, travel or infectious diseases.
     review_of_symptoms: a general summary of associated signs and symptoms.
     """
+    client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
-    response = Completion.create(
-        model="gpt-4",
-        prompt=prompt,
-        max_tokens=300,
-        temperature=0,
-        stop=["Output"]
+    response = client.chat.completions.create(
+        model="gpt-4o",
+        response_format={ "type": "json_object" },
+        messages=[
+            {
+                "role": "system",
+                "content": prompt,
+            }
+        ],
     )
 
-    structured_output = response['choices'][0]['text'].strip()
-    return structured_output
+    # chat_completion = groqClient.chat.completions.create(
+    #     messages=[
+    #         {
+    #             "role": "user",
+    #             "content": prompt,
+    #         }
+    #     ],
+    #     model="llama3-8b-8192",
+    # )
+
+    # print(chat_completion.choices[0], ' alvin here you go')
+
+    # response = openai.ChatCompletion.create(
+    #     model="gpt-4",
+    #     prompt=prompt,
+    #     max_tokens=300,
+    #     temperature=0,
+    #     stop=["Output"]
+    # )
+    #structured_output = (chat_completion.choices[0].message.content as Report)
+   
+    print(json.loads((response.choices[0].message.content)))
+    return json.loads((response.choices[0].message.content))
 
 @app.post("/endAppointment")
 def endAppointment(AppointmentEndRequest: AppointmentEndRequest):
@@ -228,20 +260,19 @@ def endAppointment(AppointmentEndRequest: AppointmentEndRequest):
             status_code=400, detail="Failure: Appointment ID mismatch")
 
     report = generate_report(state.groqDetailed)
-    # TODO: Generate data based on current state
 
     data = {
         "doctor_id":state.doctor_id,
         "appointment_id":state.current_appointment,
         "date":datetime.now().strftime("%B %d, %Y"),
         "data": {
-            "name": "Alan Wang",
-            "age": "23",
-            "chief_complaint": report.chief_complaint,
-            "history_of_present_illness": report.history_of_present_illness,
-            "family_history": report.family_history,
-            "social_history": report.social_history,
-            "review_of_symptoms": report.review_of_symptoms
+            "name": "",
+            "age": "",
+            "chief_complaint": report['chief_complaint'],
+            "history_of_present_illness": report['history_of_present_illness'],
+            "family_history": report['family_history'],
+            "social_history": report['social_history'],
+            "review_of_symptoms": report['review_of_symptoms']
         }
     }
 
@@ -317,6 +348,35 @@ async def create_detailed_summary():
     state.groqDetailed = chat_completion.choices[0].message.content
     return False
 
+async def create_diagnosis():
+    chat_completion = groqClient.chat.completions.create(
+        messages=[
+            {
+                "role": "user",
+                "content": "knowing the context you know now, generate me a concise, potential diagnosis of what the patient is going through: " + state.transcript_text
+            }
+        ],
+        model="llama3-8b-8192"
+    )
+    print("diagnosis is the following: ")
+    state.diagnosis = chat_completion.choices[0].message.content
+    return False
+
+async def create_questions():
+    chat_completion = groqClient.chat.completions.create(
+        messages=[
+            {
+                "role": "user",
+                "content": "Analyze these contents: " +  state.transcript_text + " give me a list of questions that I could ask the patient to get more info."
+            }
+        ],
+        model="llama3-8b-8192"
+    )
+    print("questions are here: ")
+    print(chat_completion.choices[0].message.content)
+    state.questions = chat_completion.choices[0].message.content
+    return False
+
 def conduct_background_research():
     print("starting the conducting")
     
@@ -326,20 +386,31 @@ def conduct_background_research():
 
     prompt = PromptTemplate(
         input_variables=["transcript_text"],
-        template="Analyze these contents: {transcript_text}, tell me either True or False if this is detailed enough or if I should do more research, you can be more lenient. Again, ONLY tell me 'True' or 'False'"
+        template="Analyze these contents: {transcript_text}, tell me either True or False if this is detailed enough or if I should do more research, you can be more lenient. Again, ONLY tell me 'True' or 'False'."
     )
+
+    # prompt2 = PromptTemplate(
+    #     input_variables=["transcript_text"],
+    #     template="Analyze these contents: {transcript_text}, give me a single string of a list of questions that I could ask the patient to get more info."
+    # )
 
     # Use RunnableSequence to chain the prompt and LLM
     chain = RunnableSequence(prompt | llm)
+    # chain2 = RunnableSequence(prompt2 | llm)
 
     # Conduct research
     detailed_summary_check = chain.invoke({"transcript_text": transcript_text})
+    # detailed_summary_check2 = chain.invoke({"transcript_text": transcript_text})
+
 
     # Check if more research is required
-    print(detailed_summary_check.content, ' is the thing byron')
-    state.moreResearchRequired = detailed_summary_check.content == "True"
+    print(detailed_summary_check, ' is the thing byron')
+    # print(detailed_summary_check2, ' is the thing2 BYRON')
+    state.moreResearchRequired = detailed_summary_check == "True"
+    # state.questions = detailed_summary_check2
     # state.questions = detailed_summary_check.
     print(f"{state.moreResearchRequired} is the CHECK")
+    print(' ')
 
     return state.moreResearchRequired 
 
@@ -356,10 +427,11 @@ async def create_dynamic_ui():
     windowContent = [
         { "id": 1, "title": "Summary point form", "body": state.groqSimple },
         { "id": 2, "title": "General facts from the patient", "body": state.groqDetailed },
-        { "id": 3, "title": "Questions you can ask the patient", "body": state.moreResearchRequired.questions },
+        { "id": 3, "title": "Questions you can ask the patient", "body": state.questions },
         { "id": 4, "title": "Potential diagnosis", "body": state.diagnosis },
     ]
 
+    print("FINAL BYRON ", windowContent)
     # state.windows = [{"id":1,"data":"Bruh"},{"id":2,"data":"Bruh"},{"id":3,"data":"Bruh"}]
     state.windows = windowContent
     return False
@@ -367,16 +439,22 @@ async def create_dynamic_ui():
 
 async def agent_handler():
     while True:
+        if(state.kill):
+            print(f"Async Thread Killed")
+            return
+    
         if (not state.dirty):
             await asyncio.sleep(10)  # Wait for 5 seconds before checking agai
             continue
 
-        if(state.kill):
-            print(f"Async Thread Killed")
-            return
         
         # Create Simple Summary
         await create_summary()
+
+        # Create diagnosis
+        await create_diagnosis()
+
+        await create_questions()
 
         # Create More Complex Summaries with RAG and Perplexity Search
         await create_detailed_summary()

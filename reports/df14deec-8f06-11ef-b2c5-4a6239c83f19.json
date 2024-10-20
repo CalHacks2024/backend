@@ -1,0 +1,14 @@
+{
+    "doctor_id": 63901323,
+    "appointment_id": "df14deec-8f06-11ef-b2c5-4a6239c83f19",
+    "date": "October 20, 2024",
+    "data": {
+        "name": "",
+        "age": "",
+        "chief_complaint": "Foot pain and swelling after playing basketball.",
+        "history_of_present_illness": "Severe pain in foot unresponsive to ice after basketball.",
+        "family_history": "Not provided.",
+        "social_history": "Active lifestyle involving sports like basketball.",
+        "review_of_symptoms": "Foot pain, swelling, and difficulty bearing weight."
+    }
+}

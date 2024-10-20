@@ -1,0 +1,14 @@
+{
+    "doctor_id": 63901323,
+    "appointment_id": "c22995f8-8f0a-11ef-b2c5-4a6239c83f19",
+    "date": "October 20, 2024",
+    "data": {
+        "name": "",
+        "age": "",
+        "chief_complaint": "I have been experiencing severe headaches for the past week.",
+        "history_of_present_illness": "The headaches started seven days ago, are mostly localized in the forehead, get worse in bright light and are not relieved by over-the-counter painkillers.",
+        "family_history": "Mother has a history of migraines.",
+        "social_history": "No recent travel and no known exposure to infectious diseases, works from home during the pandemic.",
+        "review_of_symptoms": "Accompanied by nausea, occasional dizziness, but no fever or vision changes."
+    }
+}
