@@ -12,7 +12,7 @@ from groq import Groq
 # LLM imports
 from langchain.chains.flare.prompts import PROMPT_TEMPLATE
 from langchain_core.prompts import ChatPromptTemplate
-# from openai import OpenAI
+from openai import Completion
 from rag import getDB, generate_data_store
 from consts import CHROMA_PATH
 from langchain.chains import LLMChain
@@ -190,14 +190,44 @@ class AppointmentEndRequest(BaseModel):
     doctor_id: int  # Required field
     appointment_id: str
 
+
+def generate_report(information):
+    prompt = f"""
+    Convert the following information about a patient into an obejct with the fields:
+    chief_complaint, history_of_present_illness, family_history, social_history and review_of_symptoms.
+    Avoid complex medical terminology and be concise.
+
+    Information: {information}
+
+    Output the structured result in a JSON format with the specified fields. Below is a description of each field:
+    chief_complaint: the patient's main issues in their own words.
+    history_of_present_illness: any relevant medical history related to the issue.
+    family_history: any relevant family information related to the issue.
+    social_history: any relevant information about exposure to others, travel or infectious diseases.
+    review_of_symptoms: a general summary of associated signs and symptoms.
+    """
+
+    response = Completion.create(
+        model="gpt-4",
+        prompt=prompt,
+        max_tokens=300,
+        temperature=0,
+        stop=["Output"]
+    )
+
+    structured_output = response['choices'][0]['text'].strip()
+    return structured_output
+
 @app.post("/endAppointment")
 def endAppointment(AppointmentEndRequest: AppointmentEndRequest):
     if state.doctor_id != AppointmentEndRequest.doctor_id:
         raise HTTPException(status_code=400, detail="Failure: Doctor ID mismatch") 
     
     if state.current_appointment != AppointmentEndRequest.appointment_id:
-        raise HTTPException(status_code=400, detail="Failure: Appointment ID mismatch") 
-    
+        raise HTTPException(
+            status_code=400, detail="Failure: Appointment ID mismatch")
+
+    report = generate_report(state.groqDetailed)
     # TODO: Generate data based on current state
 
     data = {
@@ -207,11 +237,11 @@ def endAppointment(AppointmentEndRequest: AppointmentEndRequest):
         "data": {
             "name": "Alan Wang",
             "age": "23",
-            "chief_complaint": "Itchy",
-            "history_of_present_illness": "COVID",
-            "family_history": "Byron Wang",
-            "social_history": "Simba Hu",
-            "review_of_symptoms": "Lol"
+            "chief_complaint": report.chief_complaint,
+            "history_of_present_illness": report.history_of_present_illness,
+            "family_history": report.family_history,
+            "social_history": report.social_history,
+            "review_of_symptoms": report.review_of_symptoms
         }
     }
 
